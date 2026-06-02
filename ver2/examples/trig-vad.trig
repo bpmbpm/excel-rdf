@@ -1,0 +1,300 @@
+# Пример TriG VADv8 (Value Added Chain Diagram с иерархией TriG) rdfs:label для vad:ExecutorGroup 
+# Исполнители определены в vad:rtree (Дерево Исполнителей)
+# https://github.com/bpmbpm/rdf-grapher/blob/main/ver9d/requirements/problem.md#name
+
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix vad: <http://example.org/vad#> .
+
+
+vad:root {
+    vad:root rdf:type vad:TechTree ;
+    rdfs:label "Корень Дерева" .
+}
+
+# ============================================================================
+# Дерево Процессов (ptree) - общий граф с метаданными всех процессов
+# ============================================================================
+
+vad:ptree {
+    vad:ptree rdf:type vad:ObjectTree ;
+        rdfs:label "Дерево Процессов (TriG)" ;
+        vad:hasParentObj vad:root .
+
+    vad:p1 rdf:type vad:TypeProcess ;
+        rdfs:label "p1 Процесс 1" ;
+        dcterms:description "p1 Процесс 1" ;
+        vad:hasParentObj vad:ptree ;
+        vad:hasTrig vad:t_p1 .
+
+    vad:p1_1 rdf:type vad:TypeProcess ;
+        rdfs:label "p1_1 Процесс 1_1" ;
+        dcterms:description "Первый процесс в цепочке добавленной стоимости" ;
+        vad:hasParentObj vad:p1 ;
+        vad:hasTrig vad:t_p1_1 .
+
+    vad:p1_2 rdf:type vad:TypeProcess ;
+        rdfs:label "Процесс 1_2" ;
+        dcterms:description "Второй процесс, выполняется после Процесса 1" ;
+         vad:hasParentObj vad:p1 .
+
+    # p1_1_1
+    vad:p1_1_1 rdf:type vad:TypeProcess ;
+        rdfs:label "p1_1_1 Процесс 1_1_1" ;
+        dcterms:description "Первый процесс в цепочке добавленной стоимости" ;
+        vad:hasParentObj vad:p1_1 .
+
+    vad:p1_1_2 rdf:type vad:TypeProcess ;
+        rdfs:label "p1_1_2 Процесс 1_1_2" ;
+        dcterms:description "Второй процесс в цепочке добавленной стоимости" ;
+        vad:hasParentObj vad:p1_1 .
+
+    vad:p2 rdf:type vad:TypeProcess ;
+        rdfs:label "p2 Процесс 2" ;
+        dcterms:description "p2 Процесс 2" ;
+        vad:hasParentObj vad:ptree ;
+        vad:hasTrig vad:t_p2 .
+
+    vad:p2_1 rdf:type vad:TypeProcess ;
+        rdfs:label "p2_1 Процесс 2_1" ;
+        dcterms:description "Первый процесс в цепочке добавленной стоимости" ;
+        vad:hasParentObj vad:p2 .
+
+    vad:p2_2 rdf:type vad:TypeProcess ;
+        rdfs:label "p2_2 Процесс 2_2" ;
+        dcterms:description "Второй процесс" ;
+        vad:hasParentObj vad:p2 .
+
+   vad:px_x rdf:type vad:TypeProcess ;
+        rdfs:label "px_x Процесс х.х" ;
+        dcterms:description "Какой-то процесс" ;
+        vad:hasParentObj vad:pNotDefined .
+
+   vad:pNotDefined rdf:type vad:TypeProcess ;
+        rdfs:label "pNotDefined Процесс" ;
+        dcterms:description "Какой-то процесс" ;
+        vad:hasParentObj vad:ptree .
+
+    # Issue #219: Концепт для тестирования удаления
+    vad:pDel rdf:type vad:TypeProcess ;
+        rdfs:label "Процесс pDel на удаление" ;
+        dcterms:description "Какой-то процесс" ;
+        vad:hasParentObj vad:ptree .
+
+}
+
+# ============================================================================
+# Дерево Исполнителей (rtree) - общий граф с метаданными всех исполнителей
+# Содержит rdf:type, rdfs:label для всех vad:Executor
+# ============================================================================
+
+vad:rtree {
+    vad:rtree rdf:type vad:ObjectTree ;
+        rdfs:label "Дерево Исполнителей (TriG)" ;
+        vad:hasParentObj vad:root .
+
+    vad:Org-structure rdf:type vad:TypeExecutor ;
+        rdfs:label "Исполнитель Org-structure" ;
+        vad:hasParentObj vad:rtree .
+
+    # Исполнители
+    vad:Executor1 rdf:type vad:TypeExecutor ;
+        rdfs:label "Исполнитель 1" ;
+        vad:hasParentObj vad:Org-structure .
+
+    vad:Executor2 rdf:type vad:TypeExecutor ;
+        rdfs:label "Исполнитель 2" ;
+        vad:hasParentObj vad:Org-structure .
+
+    vad:Executor3 rdf:type vad:TypeExecutor ;
+        rdfs:label "Исполнитель 3" ;
+        vad:hasParentObj vad:Org-structure .
+
+    vad:Executor4 rdf:type vad:TypeExecutor ;
+        rdfs:label "Исполнитель 4" ;
+        vad:hasParentObj vad:Org-structure .
+
+    vad:Executor5 rdf:type vad:TypeExecutor ;
+        rdfs:label "Исполнитель 5" ;
+        vad:hasParentObj vad:Org-structure .
+
+    vad:Executor6 rdf:type vad:TypeExecutor ;
+        rdfs:label "Исполнитель 6" ;
+        vad:hasParentObj vad:Org-structure .
+
+    vad:Executor7 rdf:type vad:TypeExecutor ;
+        rdfs:label "Исполнитель 7" ;
+        vad:hasParentObj vad:Org-structure .
+
+    vad:Executor8 rdf:type vad:TypeExecutor ;
+        rdfs:label "Исполнитель 8" ;
+        vad:hasParentObj vad:Org-structure .
+
+    # Исполнители
+    vad:Executor21 rdf:type vad:TypeExecutor ;
+        rdfs:label "Исполнитель 21" ;
+        vad:hasParentObj vad:Org-structure .
+
+    vad:Executor22 rdf:type vad:TypeExecutor ;
+        rdfs:label "Исполнитель 22" ;
+        vad:hasParentObj vad:Org-structure .
+
+    vad:Executor23 rdf:type vad:TypeExecutor ;
+        rdfs:label "Исполнитель 23" ;
+        vad:hasParentObj vad:Org-structure .
+
+    vad:Executor24 rdf:type vad:TypeExecutor ;
+        rdfs:label "Исполнитель 24" ;
+        vad:hasParentObj vad:Org-structure .
+
+    vad:Executor25 rdf:type vad:TypeExecutor ;
+        rdfs:label "Исполнитель 25" ;
+        vad:hasParentObj vad:Org-structure .
+
+    vad:Executor26 rdf:type vad:TypeExecutor ;
+        rdfs:label "Исполнитель 26" ;
+        vad:hasParentObj vad:Org-structure .
+
+    vad:Executor27 rdf:type vad:TypeExecutor ;
+        rdfs:label "Исполнитель 27" ;
+        vad:hasParentObj vad:Org-structure .
+
+    vad:Executor28 rdf:type vad:TypeExecutor ;
+        rdfs:label "Исполнитель 28" ;
+        vad:hasParentObj vad:Org-structure .
+}
+
+# ============================================================================
+# Корневой TriG граф: t_p1 (hasParentObj = p1)
+# ============================================================================
+
+vad:t_p1 {
+    vad:t_p1 rdf:type vad:VADProcessDia ;
+        rdfs:label "Схема t_p1 процесса p1" ;
+        vad:hasParentObj vad:p1 .
+
+    # Процесс p1_1 - DetailedChild (имеет дочернюю схему vad:t_p1_1)
+    # rdf:type находится в vad:ptree
+    # isSubprocessTrig указывается первым для явной связи с TriG
+    vad:p1_1 vad:isSubprocessTrig vad:t_p1 ;
+        vad:hasExecutor vad:ExecutorGroup_p1_1 ;
+        vad:hasNext vad:p1_2 .
+
+    # Процесс p1_2 - notDetailedChild
+    vad:p1_2 vad:isSubprocessTrig vad:t_p1 ;
+        vad:hasExecutor vad:ExecutorGroup_p1_2 .
+
+    # Группы исполнителей (ID формируется как ExecutorGroup_ + ID процесса)
+    vad:ExecutorGroup_p1_1 rdf:type vad:ExecutorGroup ;
+#        rdfs:label "Группа исполнителей процесса p1_1" ;
+        vad:includes vad:Executor1 .
+
+    vad:ExecutorGroup_p1_2 rdf:type vad:ExecutorGroup ;
+#        rdfs:label "Группа исполнителей процесса p1_2" ;
+        vad:includes vad:Executor1, vad:Executor2 .
+
+    # Примечание: Исполнители (vad:Executor1..8) определены в vad:rtree
+}
+
+# ============================================================================
+# Дочерний TriG граф: t_p1_1 (hasParentObj = p1_1)
+# Это детализация процесса p1_1 из родительского графа t_p1
+# ============================================================================
+
+vad:t_p1_1 {
+    vad:t_p1_1 rdf:type vad:VADProcessDia ;
+        rdfs:label "Схема t_p1_1 процесса p1_1" ;
+        vad:hasParentObj vad:p1_1 .
+
+    # Процесс p1_1_1 - notDetailedChild
+    # rdf:type находится в vad:ptree
+    # isSubprocessTrig указывается первым для явной связи с TriG
+    vad:p1_1_1 vad:isSubprocessTrig vad:t_p1_1 ;
+        vad:hasExecutor vad:ExecutorGroup_p1_1_1 ;
+        vad:hasNext vad:p1_1_2 .
+
+    # Процесс p1_1_2 - notDetailedExternal (hasParentProcess = p2, не совпадает с p1_1)
+    vad:p1_1_2 vad:isSubprocessTrig vad:t_p1_1 ;
+        vad:hasExecutor vad:ExecutorGroup_p1_1_2 .
+
+    # Группы исполнителей (ID формируется как ExecutorGroup_ + ID процесса)
+    vad:ExecutorGroup_p1_1_1 rdf:type vad:ExecutorGroup ;
+#       rdfs:label "Группа исполнителей процесса p1_1_1" ;
+        vad:includes vad:Executor21 .
+
+    vad:ExecutorGroup_p1_1_2 rdf:type vad:ExecutorGroup ;
+#        rdfs:label "Группа исполнителей процесса p1_1_2" ;
+        vad:includes vad:Executor21, vad:Executor22 .
+}
+
+# ============================================================================
+# Корневой TriG граф: t_p2 (hasParentObj = p2)
+# ============================================================================
+
+vad:t_p2 {
+    vad:t_p2 rdf:type vad:VADProcessDia ;
+        rdfs:label "Схема t_p2 процесса p2" ;
+        vad:hasParentObj vad:p2 .
+
+    # Процесс p2_1 - notDetailedChild
+    # rdf:type находится в vad:ptree
+    # isSubprocessTrig указывается первым для явной связи с TriG
+    vad:p2_1 vad:isSubprocessTrig vad:t_p2 ;
+        vad:hasExecutor vad:ExecutorGroup_p2_1 ;
+        vad:hasNext vad:p2_2, vad:p1_1 .
+
+    # Процесс p2_2
+    vad:p2_2 vad:isSubprocessTrig vad:t_p2 ;
+        vad:hasExecutor vad:ExecutorGroup_p2_2 .
+
+    # rdf:type находится в vad:ptree
+    # isSubprocessTrig указывается первым для явной связи с TriG
+    vad:p1_1 vad:isSubprocessTrig vad:t_p2 ;
+        vad:hasExecutor vad:ExecutorGroup_p1_1 ;
+        vad:hasNext vad:p1_1_1 .
+
+## vad:p1_1 в vad:t_p2 должен быть показан как детализируемый внешний
+## vad:p1_1_1 в vad:t_p2 должен быть показан как НЕдетализируемый внешний
+## vad:px_x  в vad:t_p2 должен быть показан как pNotDefined
+
+    # Процесс p1_1_1 - notDetailedChild
+    # rdf:type находится в vad:ptree
+    # isSubprocessTrig указывается первым для явной связи с TriG
+    vad:p1_1_1 vad:isSubprocessTrig vad:t_p2 ;
+        vad:hasExecutor vad:ExecutorGroup_p1_1_1 ;
+        vad:hasNext vad:px_x .
+
+    # Процесс px_x
+    # rdf:type находится в vad:ptree
+    # isSubprocessTrig указывается первым для явной связи с TriG
+    vad:px_x vad:isSubprocessTrig vad:t_p2 ;
+        vad:hasExecutor vad:ExecutorGroup_px_x .
+
+    # Группы исполнителей (ID формируется как ExecutorGroup_ + ID процесса)
+
+    vad:ExecutorGroup_p2_1 rdf:type vad:ExecutorGroup ;
+#        rdfs:label "Группа исполнителей процесса p2_1" ;
+        vad:includes vad:Executor1 .
+
+    vad:ExecutorGroup_p2_2 rdf:type vad:ExecutorGroup ;
+#        rdfs:label "Группа исполнителей процесса p2_2" ;
+        vad:includes vad:Executor1, vad:Executor2 .
+
+## vad:p1_1 в vad:t_p2
+    vad:ExecutorGroup_p1_1 rdf:type vad:ExecutorGroup ;
+#        rdfs:label "Группа исполнителей процесса p1_1" ;
+        vad:includes vad:Executor1, vad:Executor2 .
+
+## vad:p1_1_1 в vad:t_p2
+    vad:ExecutorGroup_p1_1_1 rdf:type vad:ExecutorGroup ;
+#       rdfs:label "Группа исполнителей процесса p1_1_1" ;
+        vad:includes vad:Executor1, vad:Executor2 .
+
+## px_x в vad:t_p2
+    vad:ExecutorGroup_px_x rdf:type vad:ExecutorGroup ;
+#        rdfs:label "Группа исполнителей процесса px_x" ;
+        vad:includes vad:Executor1, vad:Executor2 .
+
+}
+
