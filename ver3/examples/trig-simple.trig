@@ -1,0 +1,34 @@
+# Простой пример TriG (демонстрация именованных графов и МегаТипов) — ver3.
+#
+# Книга-предприятие из двух именованных графов (TriG):
+#   ex:catalog  — каталог товаров;
+#   ex:orders   — заказы покупателей.
+#
+# МегаТип субъекта задаётся предикатом rdf:type. Здесь встречаются МегаТипы:
+#   ex:Product (Товар), ex:Customer (Покупатель), ex:Order (Заказ).
+# При выгрузке в Excel на каждый МегаТип создаётся отдельный лист, а столбец «TriG»
+# показывает, в каком именованном графе записано утверждение.
+
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:   <http://example.org/shop#> .
+
+ex:catalog {
+    ex:apple rdf:type ex:Product ;
+        rdfs:label "Яблоко" ;
+        ex:price "30" .
+
+    ex:bread rdf:type ex:Product ;
+        rdfs:label "Хлеб" ;
+        ex:price "45" .
+}
+
+ex:orders {
+    ex:alice rdf:type ex:Customer ;
+        rdfs:label "Алиса" .
+
+    ex:order1 rdf:type ex:Order ;
+        rdfs:label "Заказ №1" ;
+        ex:customer ex:alice ;
+        ex:item ex:apple , ex:bread .
+}

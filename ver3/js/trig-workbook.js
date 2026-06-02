@@ -1,20 +1,25 @@
 /*
- * trig-workbook.js — преобразование модели TriG в книгу Excel и обратно (редакция ver2).
+ * trig-workbook.js — преобразование модели TriG в книгу Excel и обратно (редакция ver3).
  *
- * TriG отличается от Turtle наличием именованных графов. Поэтому раскладка по листам
- * строится не вокруг МегаТипов, а вокруг ГРАФОВ: один лист = один граф, строки = субъекты
- * графа, столбцы = предикаты (см. js/graph.js). Это даёт удобную таблицу на каждый граф.
+ * Отличие ver3 от ver2. В ver2 листы TriG строились вокруг ГРАФОВ (один лист = один граф).
+ * В ver3 (см. issue #5) листы анализа утверждений строятся вокруг МегаТипов — так же, как в
+ * книге Turtle. Для TriG роль предиката «МегаТип» играет rdf:type: значение rdf:type субъекта
+ * задаёт лист, на который попадает субъект. Принадлежность утверждения к именованному графу
+ * (TriG) фиксируется ОТДЕЛЬНЫМ столбцом «TriG» на листе МегаТипа.
  *
- * Состав книги TriG:
- *   1. main            — перечень листов книги, назначение и (для листов-графов) их предикаты
- *   2. Префиксы        — префиксы, используемые в исходном TriG
- *   3. TriG исходный   — исходный текст TriG
- *   4. Квадры простые  — по одной четвёрке (граф, субъект, предикат, объект) на строку
- *   5. Графы           — соответствие: лист ⇄ метка графа (используется при обратной сборке)
- *   6+. Лист на каждый граф — субъекты графа, столбцы = предикаты
+ * Состав книги TriG (ver3):
+ *   1. main                       — перечень листов книги и их назначение
+ *   2. Префиксы                   — префиксы исходного TriG
+ *   3. TriG исходный              — исходный текст TriG
+ *   4. TriG с Триплеты простые    — TriG, где внутри графов по одному триплету на строку (без ; и ,)
+ *   5. TriG с Триплеты компактные — TriG в компактной форме (с ; и ,)
+ *   6. Квадры простые             — по одной четвёрке (граф, субъект, предикат, объект) на строку
+ *   7. TriG                       — общий лист: свойства каждого графа TriG (требование 2)
+ *   8. МегаТипы                   — реестр листов МегаТипов (используется при обратной сборке)
+ *   9+. Лист на каждый МегаТип     — столбцы: Субъект | TriG | <предикаты>; строка = (субъект, граф)
  *
- * Источник истины при обратной сборке (Excel → TriG) — листы-графы, перечисленные на листе
- * «Графы». Это позволяет редактировать удобные таблицы и выгружать корректный TriG.
+ * Источник истины при обратной сборке (Excel → TriG) — листы МегаТипов, перечисленные на листе
+ * «МегаТипы». Предикат rdf:type сохраняется как обычный столбец, поэтому round-trip обратим.
  *
  * Чистая логика (раскладка/сборка) не зависит от XLSX и тестируется в node.
  */
@@ -24,25 +29,29 @@
   var isNode = (typeof module !== 'undefined' && module.exports);
   var T = isNode ? require('./turtle.js') : global.TurtleRDF;
   var TG = isNode ? require('./trig.js') : global.TrigRDF;
-  var G = isNode ? require('./graph.js') : global.GraphModel;
+  var MT = isNode ? require('./trig-megatype.js') : global.TrigMegatypeModel;
   var E = isNode ? require('./xlsx-extras.js') : global.XlsxExtras;
 
   var SHEET = {
     MAIN: 'main',
     PREFIXES: 'Префиксы',
     TRIG: 'TriG исходный',
+    SIMPLE: 'TriG с Триплеты простые',
+    COMPACT: 'TriG с Триплеты компактные',
     QUADS: 'Квадры простые',
-    GRAPHS: 'Графы'
+    SUMMARY: 'TriG',
+    MEGATYPES: 'МегаТипы'
   };
   var RESERVED = {};
   Object.keys(SHEET).forEach(function (k) { RESERVED[SHEET[k]] = true; });
 
   var SUBJECT_HEADER = 'Субъект';
+  var TRIG_HEADER = 'TriG';
   var MULTI_SEP = ' , ';
   var PRED_SEP = ' , ';
 
   function sanitizeSheetName(name, used) {
-    var clean = String(name).replace(/[:\\\/?*\[\]]/g, '_').slice(0, 31) || 'Граф';
+    var clean = String(name).replace(/[:\\\/?*\[\]]/g, '_').slice(0, 31) || 'МегаТип';
     var base = clean;
     var i = 1;
     while (used[clean]) {
@@ -55,12 +64,13 @@
 
   /*
    * Построить набор листов (AOA) из модели TriG { prefixes, base, quads }.
-   * Возвращает { order, sheets, meta: { graphs } }.
+   * Возвращает { order, sheets, meta: { megatypes } }.
    */
   function modelToSheets(model) {
     var prefixes = model.prefixes || {};
     var quads = model.quads || [];
-    var graphs = G.buildGraphs(model);
+    var megatypes = MT.buildTrigMegatypes(model);
+    var summary = MT.buildTrigSummary(model);
 
     var order = [];
     var sheets = {};
@@ -73,29 +83,29 @@
       return safe;
     }
 
-    // 6+. Листы графов (сначала вычисляем имена, чтобы перечислить их в main и Графы).
-    var graphSheetInfo = graphs.map(function (gr) {
-      var header = [SUBJECT_HEADER].concat(gr.predicates);
+    // 9+. Листы МегаТипов (сначала вычисляем имена, чтобы перечислить их в main и МегаТипы).
+    var mtSheetInfo = megatypes.map(function (mt) {
+      var header = [SUBJECT_HEADER, TRIG_HEADER].concat(mt.predicates);
       var aoa = [header];
-      gr.rows.forEach(function (row) {
-        var line = [row.subject];
-        gr.predicates.forEach(function (p) {
+      mt.rows.forEach(function (row) {
+        var line = [row.subject, row.graph == null ? '' : row.graph];
+        mt.predicates.forEach(function (p) {
           var objs = row.cells[p] || [];
           line.push(objs.join(MULTI_SEP));
         });
         aoa.push(line);
       });
       return {
-        graphTerm: gr.graphTerm,
-        graphLocal: gr.graphLocal,
-        predicates: gr.predicates,
+        megatype: mt.megatype,
+        megatypeTerm: mt.megatypeTerm,
+        predicates: mt.predicates,
         aoa: aoa,
         name: null
       };
     });
 
     // 1. main.
-    var mainAoa = [['Лист', 'Назначение', 'Предикаты (для листов-графов)']];
+    var mainAoa = [['Лист', 'Назначение', 'Предикаты (для листов МегаТипов)']];
     addSheet(SHEET.MAIN, mainAoa);
 
     // 2. Префиксы.
@@ -111,27 +121,53 @@
     trigAoa.unshift(['Исходный TriG']);
     addSheet(SHEET.TRIG, trigAoa);
 
-    // 4. Квадры простые.
-    var quadsAoa = [['Граф', SUBJECT_HEADER, 'Предикат', 'Объект']];
+    // 4. TriG с Триплеты простые (внутри графов — по одному триплету на строку).
+    var simpleText = TG.serializeTrigSimple(model);
+    var simpleAoa = simpleText.split('\n').map(function (l) { return [l]; });
+    simpleAoa.unshift(['TriG: простые триплеты (по одному на строку, без ; и ,)']);
+    addSheet(SHEET.SIMPLE, simpleAoa);
+
+    // 5. TriG с Триплеты компактные (с ; и ,).
+    var compactText = TG.serializeTrig(model);
+    var compactAoa = compactText.split('\n').map(function (l) { return [l]; });
+    compactAoa.unshift(['TriG: компактная форма (с ; и ,)']);
+    addSheet(SHEET.COMPACT, compactAoa);
+
+    // 6. Квадры простые (фоллбэк при обратной сборке).
+    var quadsAoa = [['Граф (TriG)', SUBJECT_HEADER, 'Предикат', 'Объект']];
     quads.forEach(function (q) {
       quadsAoa.push([q.g == null ? '' : q.g, q.s, q.p, q.o]);
     });
     addSheet(SHEET.QUADS, quadsAoa);
 
-    // 5. Графы — соответствие лист ⇄ метка графа (заполним именами ниже).
-    var graphsAoa = [['Лист', 'Граф (метка)', 'Назначение']];
-    addSheet(SHEET.GRAPHS, graphsAoa);
+    // 7. TriG — общий лист: свойства каждого графа.
+    var summaryAoa = [['Граф (TriG)', 'Кол-во квадров', 'Субъекты', 'Свойства (предикаты)']];
+    summary.forEach(function (s) {
+      summaryAoa.push([
+        s.graphTerm == null ? '(граф по умолчанию)' : s.graphTerm,
+        s.quadCount,
+        s.subjects.join(PRED_SEP),
+        s.predicates.join(PRED_SEP)
+      ]);
+    });
+    addSheet(SHEET.SUMMARY, summaryAoa);
 
-    // 6+. Листы графов.
-    graphSheetInfo.forEach(function (info) {
-      info.name = addSheet(info.graphLocal, info.aoa);
+    // 8. МегаТипы — реестр листов МегаТипов (заполним именами ниже).
+    var megatypesAoa = [['Лист', 'МегаТип (терм rdf:type)', 'Назначение']];
+    addSheet(SHEET.MEGATYPES, megatypesAoa);
+
+    // 9+. Листы МегаТипов.
+    mtSheetInfo.forEach(function (info) {
+      info.name = addSheet(info.megatype, info.aoa);
     });
 
-    // Заполняем Графы.
-    graphSheetInfo.forEach(function (info) {
-      var label = info.graphTerm == null ? '' : info.graphTerm;
-      var purpose = info.graphTerm == null ? 'Граф по умолчанию (без метки)' : 'Именованный граф ' + info.graphTerm;
-      graphsAoa.push([info.name, label, purpose]);
+    // Заполняем реестр МегаТипов.
+    mtSheetInfo.forEach(function (info) {
+      var term = info.megatypeTerm == null ? '' : info.megatypeTerm;
+      var purpose = info.megatypeTerm == null
+        ? 'Субъекты без явного rdf:type'
+        : 'МегаТип ' + info.megatypeTerm + ' (rdf:type)';
+      megatypesAoa.push([info.name, term, purpose]);
     });
 
     // Заполняем main.
@@ -139,12 +175,17 @@
     descriptions[SHEET.MAIN] = 'Перечень листов книги и их назначение';
     descriptions[SHEET.PREFIXES] = 'Префиксы, используемые в исходном TriG';
     descriptions[SHEET.TRIG] = 'Исходный текст TriG';
+    descriptions[SHEET.SIMPLE] = 'TriG: внутри графов по одному триплету на строку (без ; и ,)';
+    descriptions[SHEET.COMPACT] = 'TriG: компактная форма (с ; и ,)';
     descriptions[SHEET.QUADS] = 'Четвёрки (граф, субъект, предикат, объект) по одной на строку';
-    descriptions[SHEET.GRAPHS] = 'Соответствие листов и меток именованных графов';
+    descriptions[SHEET.SUMMARY] = 'Свойства каждого графа TriG (субъекты и предикаты)';
+    descriptions[SHEET.MEGATYPES] = 'Реестр листов МегаТипов (rdf:type субъекта)';
     var predsByName = {};
-    graphSheetInfo.forEach(function (info) {
-      var who = info.graphTerm == null ? 'граф по умолчанию' : 'граф «' + info.graphTerm + '»';
-      descriptions[info.name] = 'Именованный ' + who + ': субъекты и их предикаты';
+    mtSheetInfo.forEach(function (info) {
+      var who = info.megatypeTerm == null
+        ? 'Субъекты без явного rdf:type'
+        : 'МегаТип «' + info.megatypeTerm + '»: субъекты, графы (TriG) и предикаты';
+      descriptions[info.name] = who;
       predsByName[info.name] = info.predicates.join(PRED_SEP);
     });
     order.forEach(function (name) {
@@ -152,7 +193,7 @@
       mainAoa.push([name, descriptions[name] || '', predsByName[name] || '']);
     });
 
-    return { order: order, sheets: sheets, meta: { graphs: graphSheetInfo } };
+    return { order: order, sheets: sheets, meta: { megatypes: mtSheetInfo } };
   }
 
   function modelToWorkbook(model, XLSXlib) {
@@ -175,7 +216,7 @@
 
   /*
    * Обратная сборка: листы (AOA) -> модель TriG { prefixes, base, quads }.
-   * Источник истины — листы-графы, перечисленные на листе «Графы».
+   * Источник истины — листы МегаТипов, перечисленные на листе «МегаТипы».
    */
   function sheetsToModel(book) {
     var sheets = book.sheets;
@@ -193,41 +234,51 @@
       }
     }
 
-    function readGraphSheet(sheetName, graphTerm) {
+    function readMegatypeSheet(sheetName) {
       var aoa = sheets[sheetName];
-      if (!aoa || !aoa.length) { return; }
+      if (!aoa || !aoa.length) { return false; }
       var header = aoa[0] || [];
-      if (String(header[0]).trim() !== SUBJECT_HEADER) { return; }
+      if (String(header[0]).trim() !== SUBJECT_HEADER) { return false; }
+      if (String(header[1]).trim() !== TRIG_HEADER) { return false; }
       for (var i = 1; i < aoa.length; i++) {
-        var row = aoa[i] || [];
-        var subject = row[0] == null ? '' : String(row[0]).trim();
+        var arow = aoa[i] || [];
+        var subject = arow[0] == null ? '' : String(arow[0]).trim();
         if (subject === '') { continue; }
-        for (var c = 1; c < header.length; c++) {
+        var graphCell = arow[1] == null ? '' : String(arow[1]).trim();
+        var graphTerm = graphCell === '' ? null : graphCell;
+        for (var c = 2; c < header.length; c++) {
           var pred = header[c] == null ? '' : String(header[c]).trim();
           if (pred === '') { continue; }
           // Запятые внутри литералов «"..."» и IRI «<...>» не считаются разделителями.
-          T.splitObjects(row[c]).forEach(function (v) {
+          T.splitObjects(arow[c]).forEach(function (v) {
             quads.push({ g: graphTerm, s: subject, p: pred, o: v });
           });
         }
       }
+      return true;
     }
 
-    // Перечень листов-графов из листа «Графы».
-    var graphsAoa = sheets[SHEET.GRAPHS];
+    // Перечень листов МегаТипов из реестра «МегаТипы».
+    var megatypesAoa = sheets[SHEET.MEGATYPES];
     var mapped = false;
-    if (graphsAoa) {
-      for (var k = 1; k < graphsAoa.length; k++) {
-        var grow = graphsAoa[k] || [];
-        var sheetName = grow[0] == null ? '' : String(grow[0]).trim();
-        var label = grow[1] == null ? '' : String(grow[1]).trim();
+    if (megatypesAoa) {
+      for (var k = 1; k < megatypesAoa.length; k++) {
+        var mrow = megatypesAoa[k] || [];
+        var sheetName = mrow[0] == null ? '' : String(mrow[0]).trim();
         if (sheetName === '') { continue; }
-        readGraphSheet(sheetName, label === '' ? null : label);
-        mapped = true;
+        if (readMegatypeSheet(sheetName)) { mapped = true; }
       }
     }
 
-    // Фоллбэк: если карты графов нет, читаем «Квадры простые».
+    // Фоллбэк: если реестра нет — пытаемся прочитать любые листы с сигнатурой (Субъект, TriG).
+    if (!mapped) {
+      Object.keys(sheets).forEach(function (name) {
+        if (RESERVED[name]) { return; }
+        if (readMegatypeSheet(name)) { mapped = true; }
+      });
+    }
+
+    // Фоллбэк второго уровня: «Квадры простые».
     if (!mapped || quads.length === 0) {
       var quadsAoa = sheets[SHEET.QUADS];
       if (quadsAoa) {
@@ -262,6 +313,7 @@
   var api = {
     SHEET: SHEET,
     SUBJECT_HEADER: SUBJECT_HEADER,
+    TRIG_HEADER: TRIG_HEADER,
     MULTI_SEP: MULTI_SEP,
     sanitizeSheetName: sanitizeSheetName,
     modelToSheets: modelToSheets,

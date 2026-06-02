@@ -9,7 +9,7 @@
 
 
 vad:root {
-    vad:root rdf:type vad:TechTree ;
+    vad:root rdf:type vad:ObjectTree ;
     rdfs:label "Корень Дерева" .
 }
 
