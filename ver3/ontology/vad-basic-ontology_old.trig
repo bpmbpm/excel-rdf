@@ -1,0 +1,431 @@
+# ==============================================================================
+# Basic VAD Ontology (TriG Format) - Базовая онтология верхнеуровневых процессов
+# ==============================================================================
+#
+# Автор: RDF Grapher Project
+# Версия: 1.3 (ver9d) - issue #359
+# Дата создания: 2026-01-21
+# Дата обновления: 2026-02-10
+# Проект: https://github.com/bpmbpm/rdf-grapher/tree/main/ver9d/index.html
+#
+# Описание:
+# Данный файл представляет vad-basic-ontology.ttl в формате TriG с именованным
+# графом vad:VADontology. Это обеспечивает совместимость с архитектурой quadstore
+# согласно Правилу 2: "В Quadstore хранятся только данные в формате TriG".
+#
+# issue #359: Загружается при старте для использования в semantic reasoning
+# через comunica-feature-reasoning.
+#
+# СВЯЗАННЫЕ ФАЙЛЫ:
+# - vad-basic-ontology.ttl - исходная онтология в формате Turtle
+# - vad-basic-ontology_tech_Appendix.ttl - технологические классы (→ vad:techtree)
+#
+# ==============================================================================
+
+@prefix rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:      <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms:  <http://purl.org/dc/terms/> .
+@prefix vad:      <http://example.org/vad#> .
+
+# ==============================================================================
+# ИМЕНОВАННЫЙ ГРАФ vad:VADontology
+# ==============================================================================
+# Все определения базовой онтологии хранятся в этом графе.
+# Граф типа vad:TechnoTree - не отображается в treeview окна Publisher.
+# ==============================================================================
+
+vad:VADontology {
+
+    # ==========================================================================
+    # МЕТАДАННЫЕ ГРАФА vad:VADontology
+    # ==========================================================================
+
+    vad:VADontology rdf:type vad:TechnoTree ;
+        rdfs:label "VAD Basic Ontology" ;
+        vad:hasParentObj vad:techroot ;
+        rdfs:comment """
+            Именованный граф, содержащий базовую онтологию VAD.
+            issue #359: Загружается для semantic reasoning через comunica.
+        """ ;
+        dcterms:description "Базовая онтология VAD в формате TriG для semantic reasoning" .
+
+    # ==========================================================================
+    # МЕТАДАННЫЕ ОНТОЛОГИИ
+    # ==========================================================================
+
+    <http://example.org/vad#>
+        rdf:type owl:Ontology ;
+        rdfs:label "Basic VAD Ontology" ;
+        rdfs:comment """
+            Базовая онтология верхнеуровневых процессов (Basic VAD Ontology).
+
+            Предназначена для формализации бизнес-процессов в нотации VAD
+            (Value Added Diagram / Цепочка добавленной стоимости).
+
+            Ключевые концепции:
+            1. Process (TypeProcess) - ключевой объект, представляющий бизнес-процесс
+            2. VADProcessDia - схема процесса (TriG-граф)
+            3. ObjectTree - базовый класс для деревьев объектов (ptree, rtree)
+            4. TechTree - технический класс для корневого узла (vad:root)
+            5. ExecutorGroup - группа исполнителей процесса
+            6. Executor (TypeExecutor) - конкретный исполнитель
+
+            Технологические объекты (Tech) вынесены в vad-basic-ontology_tech_Appendix.ttl
+        """ ;
+        dcterms:description "Базовая онтология для моделирования верхнеуровневых бизнес-процессов в нотации VAD" ;
+        owl:versionInfo "1.3" .
+
+    # ==========================================================================
+    # КЛАССЫ (CLASSES)
+    # ==========================================================================
+
+    # --------------------------------------------------------------------------
+    # Класс Process - Процесс
+    # --------------------------------------------------------------------------
+    vad:Process
+        rdf:type rdfs:Class, owl:Class ;
+        rdfs:label "Process" ;
+        rdfs:comment "Процесс (Process) - ключевая сущность онтологии." ;
+        dcterms:description "Бизнес-процесс в цепочке добавленной стоимости" .
+
+    # --------------------------------------------------------------------------
+    # Класс TypeProcess - Синоним класса Process
+    # --------------------------------------------------------------------------
+    vad:TypeProcess
+        rdf:type rdfs:Class, owl:Class ;
+        owl:equivalentClass vad:Process ;
+        rdfs:label "TypeProcess" ;
+        rdfs:comment "TypeProcess - синоним (эквивалентный класс) для vad:Process." ;
+        dcterms:description "Синоним класса Process для использования в JavaScript-коде" .
+
+    # --------------------------------------------------------------------------
+    # Класс TriG - Базовый класс для всех типов TriG-графов
+    # --------------------------------------------------------------------------
+    vad:TriG
+        rdf:type rdfs:Class, owl:Class ;
+        rdfs:label "TriG" ;
+        rdfs:comment "Базовый класс TriG - объединяет все типы TriG-графов в проекте." ;
+        dcterms:description "Базовый класс для всех типов TriG-графов (именованных графов)" .
+
+    # --------------------------------------------------------------------------
+    # Класс VADProcessDia - Схема процесса (TriG-граф)
+    # --------------------------------------------------------------------------
+    vad:VADProcessDia
+        rdf:type rdfs:Class, owl:Class ;
+        rdfs:subClassOf vad:TriG ;
+        rdfs:label "VADProcessDia" ;
+        rdfs:comment "Схема процесса (VADProcessDia) - именованный граф TriG." ;
+        dcterms:description "Схема процесса, представленная как именованный граф TriG" .
+
+    # --------------------------------------------------------------------------
+    # Класс TechTree - Технический корневой класс
+    # --------------------------------------------------------------------------
+    vad:TechTree
+        rdf:type rdfs:Class, owl:Class ;
+        rdfs:label "TechTree" ;
+        rdfs:comment "TechTree - технический класс для корневого узла дерева объектов." ;
+        dcterms:description "Технический класс для корневого узла дерева объектов" .
+
+    # --------------------------------------------------------------------------
+    # Класс TechnoTree - Класс для технологических деревьев
+    # --------------------------------------------------------------------------
+    vad:TechnoTree
+        rdf:type rdfs:Class, owl:Class ;
+        rdfs:subClassOf vad:TriG ;
+        rdfs:label "TechnoTree" ;
+        rdfs:comment "TechnoTree - класс для технологических деревьев. Не отображаются в treeview." ;
+        dcterms:description "Класс для технологических деревьев (не отображаются в treeview)" .
+
+    # --------------------------------------------------------------------------
+    # Класс ObjectTree - Общий класс для деревьев объектов
+    # --------------------------------------------------------------------------
+    vad:ObjectTree
+        rdf:type rdfs:Class, owl:Class ;
+        rdfs:subClassOf vad:TriG ;
+        rdfs:label "ObjectTree" ;
+        rdfs:comment "Дерево объектов (ObjectTree) - общий класс для деревьев ptree и rtree." ;
+        dcterms:description "Общий класс для деревьев объектов (ptree, rtree)" .
+
+    # --------------------------------------------------------------------------
+    # Класс ProcessTree - Дерево процессов (устаревший)
+    # --------------------------------------------------------------------------
+    vad:ProcessTree
+        rdf:type rdfs:Class, owl:Class ;
+        rdfs:subClassOf vad:ObjectTree ;
+        rdfs:label "ProcessTree" ;
+        owl:deprecated true ;
+        rdfs:comment "УСТАРЕВШИЙ КЛАСС - заменён на vad:ObjectTree." ;
+        dcterms:description "Дерево процессов (устаревший, используйте ObjectTree)" .
+
+    # --------------------------------------------------------------------------
+    # Класс ExecutorGroup - Группа исполнителей
+    # --------------------------------------------------------------------------
+    vad:ExecutorGroup
+        rdf:type rdfs:Class, owl:Class ;
+        rdfs:label "ExecutorGroup" ;
+        rdfs:comment "Группа исполнителей (ExecutorGroup) - технический класс для группировки исполнителей." ;
+        dcterms:description "Группа исполнителей процесса" .
+
+    # --------------------------------------------------------------------------
+    # Класс Executor - Исполнитель
+    # --------------------------------------------------------------------------
+    vad:Executor
+        rdf:type rdfs:Class, owl:Class ;
+        rdfs:label "Executor" ;
+        rdfs:comment "Исполнитель (Executor) - конкретный участник процесса." ;
+        dcterms:description "Исполнитель (роль, подразделение или должность)" .
+
+    # --------------------------------------------------------------------------
+    # Класс TypeExecutor - Синоним класса Executor
+    # --------------------------------------------------------------------------
+    vad:TypeExecutor
+        rdf:type rdfs:Class, owl:Class ;
+        owl:equivalentClass vad:Executor ;
+        rdfs:label "TypeExecutor" ;
+        rdfs:comment "TypeExecutor - синоним (эквивалентный класс) для vad:Executor." ;
+        dcterms:description "Синоним класса Executor для использования в JavaScript-коде" .
+
+    # --------------------------------------------------------------------------
+    # Класс ExecutorTree - Дерево исполнителей (устаревший)
+    # --------------------------------------------------------------------------
+    vad:ExecutorTree
+        rdf:type rdfs:Class, owl:Class ;
+        rdfs:subClassOf vad:ObjectTree ;
+        rdfs:label "ExecutorTree" ;
+        owl:deprecated true ;
+        rdfs:comment "УСТАРЕВШИЙ КЛАСС - заменён на vad:ObjectTree." ;
+        dcterms:description "Дерево исполнителей (устаревший, используйте ObjectTree)" .
+
+    # --------------------------------------------------------------------------
+    # Класс Virtual - Виртуальные вычисляемые данные
+    # --------------------------------------------------------------------------
+    vad:Virtual
+        rdf:type rdfs:Class, owl:Class ;
+        rdfs:subClassOf vad:TechnoTree ;
+        rdfs:label "Virtual" ;
+        rdfs:comment "Класс для виртуальных TriG-контейнеров с вычисляемыми свойствами." ;
+        dcterms:description "Класс для виртуальных TriG-контейнеров с вычисляемыми свойствами" .
+
+    # ==========================================================================
+    # ТЕХНИЧЕСКИЕ ЭКЗЕМПЛЯРЫ (TECHNICAL INSTANCES)
+    # ==========================================================================
+
+    # --------------------------------------------------------------------------
+    # vad:root - Корневой узел дерева объектов
+    # --------------------------------------------------------------------------
+    vad:root
+        rdf:type vad:TechTree ;
+        rdfs:label "Корень Дерева" ;
+        rdfs:comment "Корневой технический узел (root) - образует корень дерева всех объектов." ;
+        dcterms:description "Технический корневой узел дерева объектов" .
+
+    # --------------------------------------------------------------------------
+    # vad:ptree - Дерево процессов
+    # --------------------------------------------------------------------------
+    vad:ptree
+        rdf:type vad:ObjectTree ;
+        rdfs:label "Дерево Процессов (TriG)" ;
+        rdfs:comment "Дерево процессов (ptree) - хранит концепты всех процессов." ;
+        dcterms:description "Дерево процессов, хранящее концепты всех процессов" .
+
+    # --------------------------------------------------------------------------
+    # vad:rtree - Дерево исполнителей
+    # --------------------------------------------------------------------------
+    vad:rtree
+        rdf:type vad:ObjectTree ;
+        rdfs:label "Дерево Исполнителей (TriG)" ;
+        rdfs:comment "Дерево исполнителей (rtree) - хранит метаданные всех исполнителей." ;
+        dcterms:description "Дерево исполнителей, хранящее метаданные всех исполнителей" .
+
+    # ==========================================================================
+    # СВОЙСТВА (PROPERTIES)
+    # ==========================================================================
+
+    # --------------------------------------------------------------------------
+    # vad:hasParentObj - Родительский объект
+    # --------------------------------------------------------------------------
+    vad:hasParentObj
+        rdf:type rdf:Property, owl:ObjectProperty ;
+        rdfs:label "hasParentObj" ;
+        rdfs:comment "Предикат hasParentObj определяет родительский объект в иерархии." ;
+        dcterms:description "Определяет родительский объект в иерархии для построения дерева" .
+
+    # --------------------------------------------------------------------------
+    # vad:hasTrig - Ссылка на детализирующую схему
+    # --------------------------------------------------------------------------
+    vad:hasTrig
+        rdf:type rdf:Property, owl:ObjectProperty ;
+        rdfs:label "hasTrig" ;
+        rdfs:domain vad:Process ;
+        rdfs:range vad:VADProcessDia ;
+        rdfs:comment "Предикат hasTrig связывает концепт процесса с его детализирующей схемой." ;
+        dcterms:description "Связывает концепт процесса с его детализирующей схемой TriG" .
+
+    # --------------------------------------------------------------------------
+    # vad:definesProcess - Устаревший предикат
+    # --------------------------------------------------------------------------
+    vad:definesProcess
+        rdf:type rdf:Property, owl:ObjectProperty ;
+        rdfs:label "definesProcess" ;
+        owl:deprecated true ;
+        rdfs:comment "УСТАРЕВШИЙ ПРЕДИКАТ - заменён на vad:hasParentObj." ;
+        dcterms:description "Устаревший предикат, заменён на hasParentObj" .
+
+    # --------------------------------------------------------------------------
+    # vad:hasNext - Следующий процесс
+    # --------------------------------------------------------------------------
+    vad:hasNext
+        rdf:type rdf:Property, owl:ObjectProperty ;
+        rdfs:label "hasNext" ;
+        rdfs:domain vad:Process ;
+        rdfs:range vad:Process ;
+        rdfs:comment "Предикат hasNext определяет следующий процесс в цепочке VAD." ;
+        dcterms:description "Определяет следующий процесс в цепочке добавленной стоимости" .
+
+    # --------------------------------------------------------------------------
+    # vad:isSubprocessTrig - Явная связь процесса со схемой
+    # --------------------------------------------------------------------------
+    vad:isSubprocessTrig
+        rdf:type rdf:Property, owl:ObjectProperty ;
+        rdfs:label "isSubprocessTrig" ;
+        rdfs:domain vad:Process ;
+        rdfs:range vad:VADProcessDia ;
+        rdfs:comment "Предикат isSubprocessTrig явно указывает вхождение индивида в схему процесса." ;
+        dcterms:description "Явно указывает вхождение индивида процесса в схему процесса (TriG)" .
+
+    # --------------------------------------------------------------------------
+    # vad:hasExecutor - Исполнитель процесса
+    # --------------------------------------------------------------------------
+    vad:hasExecutor
+        rdf:type rdf:Property, owl:ObjectProperty ;
+        rdfs:label "hasExecutor" ;
+        rdfs:domain vad:Process ;
+        rdfs:range vad:ExecutorGroup ;
+        rdfs:comment "Предикат hasExecutor связывает процесс с группой исполнителей." ;
+        dcterms:description "Связывает процесс с группой исполнителей" .
+
+    # --------------------------------------------------------------------------
+    # vad:processSubtype - Подтип процесса
+    # --------------------------------------------------------------------------
+    vad:processSubtype
+        rdf:type rdf:Property, owl:ObjectProperty ;
+        rdfs:label "processSubtype" ;
+        rdfs:domain vad:Process ;
+        rdfs:comment "Подтип процесса. Вычисляется автоматически и хранится в Virtual TriG." ;
+        dcterms:description "Подтип процесса (вычисляется автоматически, хранится в Virtual TriG)" .
+
+    # --------------------------------------------------------------------------
+    # vad:includes - Включает исполнителя
+    # --------------------------------------------------------------------------
+    vad:includes
+        rdf:type rdf:Property, owl:ObjectProperty ;
+        rdfs:label "includes" ;
+        rdfs:domain vad:ExecutorGroup ;
+        rdfs:range vad:Executor ;
+        rdfs:comment "Предикат includes связывает группу исполнителей с конкретными исполнителями." ;
+        dcterms:description "Связывает группу исполнителей с конкретными исполнителями" .
+
+    # ==========================================================================
+    # RDFS ПРАВИЛА ДЛЯ SEMANTIC REASONING (issue #359)
+    # ==========================================================================
+    # Эти аксиомы используются comunica-feature-reasoning для вывода
+    # ==========================================================================
+
+    # RDFS subclass hierarchy для иерархии классов
+    vad:VADProcessDia rdfs:subClassOf vad:TriG .
+    vad:ObjectTree rdfs:subClassOf vad:TriG .
+    vad:TechnoTree rdfs:subClassOf vad:TriG .
+    vad:ProcessTree rdfs:subClassOf vad:ObjectTree .
+    vad:ExecutorTree rdfs:subClassOf vad:ObjectTree .
+    vad:Virtual rdfs:subClassOf vad:TechnoTree .
+
+    # Эквивалентные классы для reasoning
+    vad:TypeProcess owl:equivalentClass vad:Process .
+    vad:TypeExecutor owl:equivalentClass vad:Executor .
+
+    # Inverse properties (для reasoning)
+    # vad:hasTrig owl:inverseOf vad:hasParentObj . # при определённых условиях
+
+    # ==========================================================================
+    # ПОДТИПЫ ПРОЦЕССОВ ДЛЯ REASONING (issue #359)
+    # ==========================================================================
+    # Иерархия классов подтипов для comunica-feature-reasoning
+    # Полные определения в vad-basic-ontology_tech_Appendix.ttl (vad:techtree)
+    # ==========================================================================
+
+    # Зонтичный класс для подтипов
+    vad:ColorVadShape
+        rdf:type rdfs:Class, owl:Class ;
+        rdfs:label "ColorVadShape" ;
+        rdfs:comment "Зонтичный класс для подтипов процессов, определяющий цвет VAD-элемента." ;
+        dcterms:description "Зонтичный класс для подтипов процессов" .
+
+    # Базовые подтипы
+    vad:Detailed
+        rdf:type rdfs:Class, owl:Class ;
+        rdfs:subClassOf vad:ColorVadShape ;
+        rdfs:label "Detailed" ;
+        rdfs:comment "Детализированный процесс (имеет дочернюю схему hasTrig)." ;
+        dcterms:description "Детализированный процесс (имеет дочернюю схему)" .
+
+    vad:notDetailed
+        rdf:type rdfs:Class, owl:Class ;
+        rdfs:subClassOf vad:ColorVadShape ;
+        rdfs:label "notDetailed" ;
+        rdfs:comment "Не детализированный процесс (не имеет дочерней схемы)." ;
+        dcterms:description "Не детализированный процесс (без дочерней схемы)" .
+
+    vad:NotDefinedType
+        rdf:type rdfs:Class, owl:Class ;
+        rdfs:subClassOf vad:ColorVadShape ;
+        rdfs:label "NotDefinedType" ;
+        rdfs:comment "Процесс с неопределённым родителем (hasParentObj = pNotDefined)." ;
+        dcterms:description "Процесс с неопределённым родителем (pNotDefined)" .
+
+    # Конкретные подтипы (для визуализации)
+    vad:DetailedChild
+        rdf:type rdfs:Class, owl:Class ;
+        rdfs:subClassOf vad:Detailed ;
+        rdfs:label "DetailedChild" ;
+        rdfs:comment "DetailedChild - детализированный процесс в схеме родительского процесса." ;
+        dcterms:description "Детализированный процесс-подпроцесс" .
+
+    vad:DetailedExternal
+        rdf:type rdfs:Class, owl:Class ;
+        rdfs:subClassOf vad:Detailed ;
+        rdfs:label "DetailedExternal" ;
+        rdfs:comment "DetailedExternal - детализированный процесс во внешней схеме." ;
+        dcterms:description "Детализированный внешний процесс" .
+
+    vad:notDetailedChild
+        rdf:type rdfs:Class, owl:Class ;
+        rdfs:subClassOf vad:notDetailed ;
+        rdfs:label "notDetailedChild" ;
+        rdfs:comment "notDetailedChild - не детализированный процесс в схеме родительского процесса." ;
+        dcterms:description "Не детализированный процесс-подпроцесс" .
+
+    vad:notDetailedExternal
+        rdf:type rdfs:Class, owl:Class ;
+        rdfs:subClassOf vad:notDetailed ;
+        rdfs:label "notDetailedExternal" ;
+        rdfs:comment "notDetailedExternal - не детализированный процесс во внешней схеме." ;
+        dcterms:description "Не детализированный внешний процесс" .
+
+    # ==========================================================================
+    # СПЕЦИАЛЬНЫЕ ОБЪЕКТЫ
+    # ==========================================================================
+
+    # vad:pNotDefined - Маркер неопределённого родителя
+    vad:pNotDefined
+        rdf:type vad:TypeProcess ;
+        rdfs:label "Не определён" ;
+        rdfs:comment "Маркер для процессов с неопределённым родителем." ;
+        dcterms:description "Маркер неопределённого родительского процесса" .
+
+}
+
+# ==============================================================================
+# КОНЕЦ ФАЙЛА vad-basic-ontology.trig
+# ==============================================================================
