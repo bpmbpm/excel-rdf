@@ -86,9 +86,8 @@
       return { megatype: mt.megatype, megatypeTerm: mt.megatypeTerm, aoa: aoa, name: null };
     });
 
-    // 1. main — перечень листов.
+    // 1. main — перечень листов (строки добавим ниже, когда узнаем все имена).
     var mainAoa = [['Лист', 'Назначение']];
-    var mainRowsPlaceholderStart = mainAoa.length;
     addSheet(SHEET.MAIN, mainAoa);
 
     // 2. Префиксы.
