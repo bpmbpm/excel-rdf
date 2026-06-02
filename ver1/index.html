@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>excel-rdf — конвертеры Turtle ⇄ Excel</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header>
+    <h1>excel-rdf</h1>
+    <p class="subtitle">Браузерные конвертеры <b>Turtle&nbsp;RDF&nbsp;→&nbsp;Excel</b> и <b>Excel&nbsp;→&nbsp;Turtle&nbsp;RDF</b>.
+       Всё выполняется локально в браузере, файлы никуда не отправляются.</p>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="t2e">Turtle → Excel</button>
+    <button class="tab" data-tab="e2t">Excel → Turtle</button>
+    <button class="tab" data-tab="about">О проекте</button>
+  </nav>
+
+  <!-- ===================== Turtle → Excel ===================== -->
+  <section id="t2e" class="panel active">
+    <h2>Turtle&nbsp;RDF → Excel</h2>
+    <p>Загрузите файл <code>.ttl</code> или вставьте текст Turtle, затем нажмите «Создать книгу Excel».</p>
+
+    <div class="row">
+      <label class="filebtn">
+        Выбрать .ttl файл
+        <input type="file" id="ttlFile" accept=".ttl,.txt,text/turtle" />
+      </label>
+      <button id="loadExample">Загрузить пример</button>
+    </div>
+
+    <textarea id="ttlInput" spellcheck="false" placeholder="@prefix : <http://example.org/bpm#> .
+:Процесс_А :МегаТип :Процесс ;
+    :владелец :Иванов ."></textarea>
+
+    <div class="row">
+      <button id="convertT2E" class="primary">Создать книгу Excel (.xlsx)</button>
+      <span id="t2eStatus" class="status"></span>
+    </div>
+
+    <div id="t2ePreview" class="preview"></div>
+  </section>
+
+  <!-- ===================== Excel → Turtle ===================== -->
+  <section id="e2t" class="panel">
+    <h2>Excel → Turtle&nbsp;RDF</h2>
+    <p>Загрузите книгу <code>.xlsx</code>, созданную этим инструментом (или с такой же структурой листов).
+       Источник данных для выгрузки — листы МегаТипов и лист «Прочие триплеты».</p>
+
+    <div class="row">
+      <label class="filebtn">
+        Выбрать .xlsx файл
+        <input type="file" id="xlsxFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+      </label>
+      <button id="convertE2T" class="primary">Преобразовать в Turtle</button>
+      <span id="e2tStatus" class="status"></span>
+    </div>
+
+    <textarea id="ttlOutput" spellcheck="false" placeholder="Здесь появится Turtle RDF..." readonly></textarea>
+
+    <div class="row">
+      <button id="downloadTtl">Скачать .ttl</button>
+      <button id="copyTtl">Копировать</button>
+    </div>
+  </section>
+
+  <!-- ===================== О проекте ===================== -->
+  <section id="about" class="panel">
+    <h2>О проекте</h2>
+    <p>Подробное описание состава книги Excel, концепции «МегаТип», проверок VBA и
+       альтернативных подходов см. в каталогах <code>doc/</code> и <code>analysis/</code> репозитория.</p>
+    <h3>Состав книги Excel</h3>
+    <ol>
+      <li><b>main</b> — перечень листов книги и их назначение.</li>
+      <li><b>Префиксы</b> — префиксы, используемые в исходном Turtle.</li>
+      <li><b>Turtle исходный</b> — исходный текст Turtle RDF.</li>
+      <li><b>Триплеты простые</b> — по одному элементарному триплету на строку (без <code>;</code> и <code>,</code>).</li>
+      <li><b>Триплеты компактные</b> — Turtle с <code>;</code> и <code>,</code> (сокращённое число утверждений).</li>
+      <li><b>Листы МегаТипов</b> — на каждый МегаТип свой лист: строки — объекты, столбцы — предикаты.</li>
+      <li><b>Прочие триплеты</b> — триплеты субъектов без МегаТипа.</li>
+    </ol>
+  </section>
+
+  <footer>
+    <p>excel-rdf · только браузерный JavaScript · работает на GitHub&nbsp;Pages ·
+       таблицы через <a href="https://sheetjs.com/" target="_blank" rel="noopener">SheetJS</a></p>
+  </footer>
+
+  <!-- SheetJS (XLSX) из CDN — единственная внешняя зависимость, только браузер. -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="js/turtle.js"></script>
+  <script src="js/megatype.js"></script>
+  <script src="js/workbook.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
