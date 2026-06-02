@@ -5,3 +5,4 @@
 
 ### rdf
 - [Семантический триплет](https://rabrain.ru/special/handbook/schemaorg/rdf/terminology/)
+- https://rabrain.ru/special/handbook/schemaorg/rdf/terminology/
