@@ -1,5 +1,5 @@
 /*
- * app.js — связывание интерфейса (index.html) с логикой конвертеров (редакция ver2).
+ * app.js — связывание интерфейса (index.html) с логикой конвертеров (редакция ver3).
  * Только браузерный JavaScript. Использует глобальные объекты:
  *   XLSX                — библиотека SheetJS (CDN)
  *   TurtleRDF           — js/turtle.js
@@ -8,6 +8,7 @@
  *   WorkbookModel       — js/workbook.js
  *   TrigRDF             — js/trig.js
  *   GraphModel          — js/graph.js
+ *   TrigMegatypeModel   — js/trig-megatype.js (МегаТипы для TriG)
  *   TrigWorkbookModel   — js/trig-workbook.js
  */
 (function () {
@@ -170,10 +171,25 @@
       .then(function (r) { if (!r.ok) { throw new Error('нет файла примера'); } return r.text(); })
       .then(function (t) { trigInput.value = t; })
       .catch(function () {
-        trigInput.value = '@prefix : <http://example.org/vad#> .\n' +
+        trigInput.value = '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n' +
+          '@prefix : <http://example.org/vad#> .\n' +
           '@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\n\n' +
-          ':root {\n    :root rdfs:label "Корень" .\n}\n\n' +
-          ':ptree {\n    :p1 rdfs:label "Процесс 1" ;\n        :hasParentObj :root .\n}\n';
+          ':root {\n    :root rdf:type :ObjectTree ;\n        rdfs:label "Корень" .\n}\n\n' +
+          ':ptree {\n    :p1 rdf:type :TypeProcess ;\n        rdfs:label "Процесс 1" ;\n        :hasParentObj :root .\n}\n';
+      });
+  });
+
+  // Второй (более простой) пример TriG — требование 4 issue #5.
+  $('loadTrigSimpleExample').addEventListener('click', function () {
+    fetch('examples/trig-simple.trig')
+      .then(function (r) { if (!r.ok) { throw new Error('нет файла примера'); } return r.text(); })
+      .then(function (t) { trigInput.value = t; })
+      .catch(function () {
+        trigInput.value = '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n' +
+          '@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\n' +
+          '@prefix ex: <http://example.org/shop#> .\n\n' +
+          'ex:catalog {\n    ex:apple rdf:type ex:Product ;\n        rdfs:label "Яблоко" ;\n        ex:price "30" .\n}\n\n' +
+          'ex:orders {\n    ex:order1 rdf:type ex:Order ;\n        ex:item ex:apple .\n}\n';
       });
   });
 
@@ -210,7 +226,7 @@
         var wb = XLSX.read(data, { type: 'array' });
         var model = TrigWorkbookModel.workbookToModel(wb, XLSX);
         if (!model.quads.length) {
-          setStatus(status, 'В книге не найдено квадров (проверьте листы графов и лист «Графы»).', false);
+          setStatus(status, 'В книге не найдено квадров (проверьте листы МегаТипов и лист «МегаТипы»).', false);
           return;
         }
         trigOutput.value = TrigRDF.serializeTrig(model);
