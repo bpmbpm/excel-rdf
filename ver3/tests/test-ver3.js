@@ -1,18 +1,21 @@
 /*
- * test-ver2.js — автоматические проверки редакции ver2 (запуск в node только для тестирования).
+ * test-ver3.js — автоматические проверки редакции ver3 (запуск в node только для тестирования).
  *
  * Сам продукт работает в браузере. Тесты используют чистые функции модулей и библиотеку
  * XLSX (SheetJS) только для проверки целостности готового .xlsx (закрепление строки,
  * автофильтр). Библиотека xlsx ставится локально и в репозиторий не входит (см. .gitignore).
  *
- * Запуск:  node ver2/tests/test-ver2.js
+ * Запуск:  node ver3/tests/test-ver3.js
  *
  * Проверяется:
  *   • round-trip Turtle  → листы → Turtle   (сохранение триплетов и префиксов);
- *   • round-trip TriG    → листы → TriG      (сохранение квадров и графов);
- *   • столбец «Предикаты» на листе main для листов МегаТипов (требование 3);
- *   • закрепление первой строки + автофильтр на каждом листе .xlsx (требование 1);
- *   • разбор примера TriG VADv8 с именованными графами (требование 4).
+ *   • round-trip TriG    → листы МегаТипов → TriG (сохранение квадров и графов, требования 1–3);
+ *   • листы МегаТипов TriG: столбцы «Субъект | TriG | предикаты…» (требование 2);
+ *   • общий лист «TriG» со свойствами графов и реестр «МегаТипы» (требование 2);
+ *   • текстовые листы простой и компактной форм TriG (требование 1);
+ *   • второй (простой) пример TriG examples/trig-simple.trig (требование 4);
+ *   • закрепление первой строки + автофильтр на каждом листе .xlsx;
+ *   • разбор примера TriG VAD с именованными графами и МегаТипами (требование 3).
  */
 'use strict';
 
@@ -24,7 +27,7 @@ var T = require('../js/turtle.js');
 var M = require('../js/megatype.js');
 var W = require('../js/workbook.js');
 var TG = require('../js/trig.js');
-var G = require('../js/graph.js');
+var MT = require('../js/trig-megatype.js');
 var TW = require('../js/trig-workbook.js');
 var E = require('../js/xlsx-extras.js');
 
@@ -84,7 +87,7 @@ ttlFiles().forEach(function (file) {
   });
 });
 
-console.log('Лист main: столбец «Предикаты» для листов МегаТипов (требование 3):');
+console.log('Лист main: столбец «Предикаты» для листов МегаТипов (Turtle):');
 
 test('main перечисляет предикаты листа МегаТипа', function () {
   var text = fs.readFileSync(path.join(__dirname, '..', 'examples', 'example4.ttl'), 'utf8');
@@ -105,40 +108,145 @@ test('main перечисляет предикаты листа МегаТипа
   assert.strictEqual(String(prefRow[2] || ''), '', 'у служебного листа не должно быть предикатов');
 });
 
-console.log('TriG round-trip (через листы):');
+console.log('TriG round-trip через листы МегаТипов (требования 1–3):');
 
-test('round-trip TriG: trig-vad.trig', function () {
-  var text = fs.readFileSync(path.join(__dirname, '..', 'examples', 'trig-vad.trig'), 'utf8');
-  var model = TG.parseTrig(text); model.rawText = text;
-  var book = TW.modelToSheets(model);
-  var back = TW.sheetsToModel(book);
-  assertSameQuads(model.quads, back.quads, 'round-trip TriG потерял квадры');
-  Object.keys(model.prefixes).forEach(function (p) {
-    assert.strictEqual(back.prefixes[p], model.prefixes[p], 'префикс ' + p + ' потерян');
+// Помощник: список .trig примеров.
+function trigFiles() {
+  var dir = path.join(__dirname, '..', 'examples');
+  return fs.readdirSync(dir).filter(function (f) { return /\.trig$/.test(f); })
+    .map(function (f) { return path.join(dir, f); });
+}
+
+trigFiles().forEach(function (file) {
+  var name = path.basename(file);
+  test('round-trip TriG через листы: ' + name, function () {
+    var text = fs.readFileSync(file, 'utf8');
+    var model = TG.parseTrig(text); model.rawText = text;
+    var book = TW.modelToSheets(model);
+    var back = TW.sheetsToModel(book);
+    assertSameQuads(model.quads, back.quads, 'round-trip TriG потерял квадры: ' + name);
+    Object.keys(model.prefixes).forEach(function (p) {
+      assert.strictEqual(back.prefixes[p], model.prefixes[p], 'префикс ' + p + ' потерян');
+    });
   });
 });
 
-test('round-trip TriG через сериализацию (parse → serialize → parse)', function () {
+test('round-trip TriG через сериализацию компактную (parse → serialize → parse)', function () {
   var text = fs.readFileSync(path.join(__dirname, '..', 'examples', 'trig-vad.trig'), 'utf8');
   var model = TG.parseTrig(text);
   var reparsed = TG.parseTrig(TG.serializeTrig(model));
-  assertSameQuads(model.quads, reparsed.quads, 'сериализация TriG потеряла квадры');
+  assertSameQuads(model.quads, reparsed.quads, 'компактная сериализация TriG потеряла квадры');
 });
 
-test('TriG: именованные графы распознаются', function () {
+test('round-trip TriG через сериализацию простую (parse → serializeSimple → parse)', function () {
   var text = fs.readFileSync(path.join(__dirname, '..', 'examples', 'trig-vad.trig'), 'utf8');
   var model = TG.parseTrig(text);
-  var graphTerms = {};
-  model.quads.forEach(function (q) { if (q.g != null) { graphTerms[q.g] = true; } });
-  ['vad:root', 'vad:ptree', 'vad:rtree', 'vad:t_p1', 'vad:t_p1_1', 'vad:t_p2'].forEach(function (g) {
-    assert.ok(graphTerms[g], 'не найден именованный граф ' + g);
-  });
-  // Группировка по графам даёт отдельную таблицу на каждый граф.
-  var graphs = G.buildGraphs(model);
-  assert.ok(graphs.length >= 6, 'ожидалось не менее 6 графов, получено ' + graphs.length);
+  var reparsed = TG.parseTrig(TG.serializeTrigSimple(model));
+  assertSameQuads(model.quads, reparsed.quads, 'простая сериализация TriG потеряла квадры');
 });
 
-test('TriG: несколько объектов на предикат (vad:hasNext vad:p2_2, vad:p1_1)', function () {
+console.log('Листы анализа TriG строятся вокруг МегаТипов, а не графов (требование 2):');
+
+test('trig-vad.trig: МегаТипы по rdf:type (ObjectTree, TypeProcess, TypeExecutor, VADProcessDia, ExecutorGroup)', function () {
+  var text = fs.readFileSync(path.join(__dirname, '..', 'examples', 'trig-vad.trig'), 'utf8');
+  var model = TG.parseTrig(text);
+  var mts = MT.buildTrigMegatypes(model);
+  var locals = mts.map(function (m) { return m.megatype; });
+  ['ObjectTree', 'TypeProcess', 'TypeExecutor', 'VADProcessDia', 'ExecutorGroup'].forEach(function (m) {
+    assert.ok(locals.indexOf(m) >= 0, 'не найден лист МегаТипа ' + m + ', получено: ' + locals.join(', '));
+  });
+});
+
+test('лист МегаТипа имеет столбцы «Субъект | TriG | предикаты…», строка = (субъект, граф)', function () {
+  var text = fs.readFileSync(path.join(__dirname, '..', 'examples', 'trig-vad.trig'), 'utf8');
+  var model = TG.parseTrig(text); model.rawText = text;
+  var book = TW.modelToSheets(model);
+  // Лист МегаТипа ObjectTree существует и имеет нужные первые два столбца.
+  var sheet = book.sheets['ObjectTree'];
+  assert.ok(sheet, 'нет листа МегаТипа ObjectTree');
+  assert.strictEqual(String(sheet[0][0]), TW.SUBJECT_HEADER, 'первый столбец листа МегаТипа должен быть «Субъект»');
+  assert.strictEqual(String(sheet[0][1]), TW.TRIG_HEADER, 'второй столбец листа МегаТипа должен быть «TriG»');
+  // В столбце «TriG» строки указан именованный граф (терм графа).
+  var dataRow = sheet[1];
+  assert.ok(dataRow && String(dataRow[1]).indexOf(':') >= 0, 'в столбце TriG должен быть указан граф, получено: ' + (dataRow && dataRow[1]));
+});
+
+test('общий лист «TriG» (сводка по графам) присутствует и перечисляет графы', function () {
+  var text = fs.readFileSync(path.join(__dirname, '..', 'examples', 'trig-vad.trig'), 'utf8');
+  var model = TG.parseTrig(text); model.rawText = text;
+  var book = TW.modelToSheets(model);
+  var summary = book.sheets[TW.SHEET.SUMMARY];
+  assert.ok(summary, 'нет общего листа «TriG»');
+  assert.ok(/Граф/.test(String(summary[0][0])), 'заголовок общего листа TriG должен начинаться со столбца «Граф»');
+  var graphsListed = summary.slice(1).map(function (r) { return String(r[0]); });
+  ['vad:root', 'vad:ptree', 'vad:rtree'].forEach(function (g) {
+    assert.ok(graphsListed.indexOf(g) >= 0, 'граф ' + g + ' не указан в общем листе TriG, получено: ' + graphsListed.join(', '));
+  });
+});
+
+test('реестр «МегаТипы» перечисляет листы МегаТипов и их термы', function () {
+  var text = fs.readFileSync(path.join(__dirname, '..', 'examples', 'trig-vad.trig'), 'utf8');
+  var model = TG.parseTrig(text); model.rawText = text;
+  var book = TW.modelToSheets(model);
+  var reg = book.sheets[TW.SHEET.MEGATYPES];
+  assert.ok(reg, 'нет листа реестра «МегаТипы»');
+  var names = reg.slice(1).map(function (r) { return String(r[0]); });
+  ['ObjectTree', 'TypeProcess', 'TypeExecutor', 'VADProcessDia', 'ExecutorGroup'].forEach(function (m) {
+    assert.ok(names.indexOf(m) >= 0, 'реестр МегаТипов не содержит лист ' + m);
+  });
+  // Терм rdf:type записан во втором столбце.
+  var objRow = reg.slice(1).filter(function (r) { return r[0] === 'ObjectTree'; })[0];
+  assert.strictEqual(String(objRow[1]), 'vad:ObjectTree', 'терм МегаТипа ObjectTree должен быть vad:ObjectTree');
+});
+
+test('текстовые листы простой и компактной форм TriG присутствуют (требование 1)', function () {
+  var text = fs.readFileSync(path.join(__dirname, '..', 'examples', 'trig-vad.trig'), 'utf8');
+  var model = TG.parseTrig(text); model.rawText = text;
+  var book = TW.modelToSheets(model);
+  assert.ok(book.sheets[TW.SHEET.SIMPLE], 'нет листа «TriG с Триплеты простые»');
+  assert.ok(book.sheets[TW.SHEET.COMPACT], 'нет листа «TriG с Триплеты компактные»');
+  // Простая форма: текст листа должен заново разбираться в те же квадры.
+  var simpleText = book.sheets[TW.SHEET.SIMPLE].slice(1).map(function (r) { return r[0]; }).join('\n');
+  var simpleModel = TG.parseTrig(simpleText);
+  assertSameQuads(model.quads, simpleModel.quads, 'текст простой формы не воспроизводит квадры');
+  var compactText = book.sheets[TW.SHEET.COMPACT].slice(1).map(function (r) { return r[0]; }).join('\n');
+  var compactModel = TG.parseTrig(compactText);
+  assertSameQuads(model.quads, compactModel.quads, 'текст компактной формы не воспроизводит квадры');
+});
+
+test('rdf:type сохранён как обычный столбец (round-trip не выдумывает квадров)', function () {
+  // Один субъект в двух графах с разными rdf:type — должны сохраниться оба, без дублей.
+  var src = '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n' +
+    '@prefix : <http://ex#> .\n' +
+    ':g1 { :s rdf:type :A ; :p :x . }\n' +
+    ':g2 { :s rdf:type :B ; :p :y . }\n';
+  var model = TG.parseTrig(src);
+  var book = TW.modelToSheets(model);
+  var back = TW.sheetsToModel(book);
+  assertSameQuads(model.quads, back.quads, 'round-trip потерял или выдумал квадры при двух графах одного субъекта');
+});
+
+console.log('Второй (простой) пример TriG — требование 4:');
+
+test('examples/trig-simple.trig существует и round-trip через листы сохраняет квадры', function () {
+  var file = path.join(__dirname, '..', 'examples', 'trig-simple.trig');
+  assert.ok(fs.existsSync(file), 'нет файла второго примера trig-simple.trig');
+  var text = fs.readFileSync(file, 'utf8');
+  var model = TG.parseTrig(text); model.rawText = text;
+  assert.ok(model.quads.length > 0, 'второй пример не содержит квадров');
+  var book = TW.modelToSheets(model);
+  var back = TW.sheetsToModel(book);
+  assertSameQuads(model.quads, back.quads, 'round-trip второго примера потерял квадры');
+  // МегаТипы простого примера: Product, Customer, Order.
+  var mts = MT.buildTrigMegatypes(model).map(function (m) { return m.megatype; });
+  ['Product', 'Customer', 'Order'].forEach(function (m) {
+    assert.ok(mts.indexOf(m) >= 0, 'в простом примере нет МегаТипа ' + m + ', получено: ' + mts.join(', '));
+  });
+});
+
+console.log('TriG: базовые свойства парсера:');
+
+test('TriG: несколько объектов на предикат (:next :b , :c)', function () {
   var m = TG.parseTrig('@prefix : <http://ex#> .\n:g { :a :next :b , :c . }');
   assertSameQuads(m.quads, [
     { g: ':g', s: ':a', p: ':next', o: ':b' },
@@ -154,19 +262,17 @@ test('TriG: граф по умолчанию (триплеты вне скобо
   ]);
 });
 
-console.log('Бинарный .xlsx: закрепление строки и автофильтр (требование 1):');
+console.log('Бинарный .xlsx: закрепление строки и автофильтр:');
 
 if (!XLSX) {
   skip('freeze + autofilter на всех листах', 'библиотека xlsx не установлена');
 } else {
-  test('freeze panes и autoFilter присутствуют в каждом листе', function () {
+  test('freeze panes и autoFilter присутствуют в каждом листе (Turtle)', function () {
     var text = fs.readFileSync(path.join(__dirname, '..', 'examples', 'example4.ttl'), 'utf8');
     var model = T.parseTurtle(text); model.rawText = text;
     var bytes = W.modelToXlsxBytes(model, XLSX);
-    // Книгу можно открыть обратно — ZIP целостен.
     var wb = XLSX.read(bytes, { type: 'array' });
     assert.ok(wb.SheetNames.length > 0, 'книга не открылась');
-    // В каждом листе worksheet есть <pane> и <autoFilter>.
     var entries = E.parseZip(bytes).filter(function (e) { return /xl\/worksheets\/sheet\d+\.xml$/.test(e.name); });
     assert.ok(entries.length > 0, 'нет листов worksheet в архиве');
     var dec = new TextDecoder('utf-8');
@@ -177,12 +283,15 @@ if (!XLSX) {
     });
   });
 
-  test('TriG .xlsx также с закреплением и автофильтром', function () {
+  test('TriG .xlsx: листы МегаТипов с закреплением и автофильтром', function () {
     var text = fs.readFileSync(path.join(__dirname, '..', 'examples', 'trig-vad.trig'), 'utf8');
     var model = TG.parseTrig(text); model.rawText = text;
     var bytes = TW.modelToXlsxBytes(model, XLSX);
     var wb = XLSX.read(bytes, { type: 'array' });
-    assert.ok(wb.SheetNames.indexOf('ptree') >= 0, 'нет листа графа ptree');
+    // В ver3 листы строятся по МегаТипам, а не по графам.
+    assert.ok(wb.SheetNames.indexOf('ObjectTree') >= 0, 'нет листа МегаТипа ObjectTree');
+    assert.ok(wb.SheetNames.indexOf(TW.SHEET.SUMMARY) >= 0, 'нет общего листа TriG');
+    assert.ok(wb.SheetNames.indexOf(TW.SHEET.MEGATYPES) >= 0, 'нет листа реестра МегаТипов');
     var entries = E.parseZip(bytes).filter(function (e) { return /xl\/worksheets\/sheet\d+\.xml$/.test(e.name); });
     var dec = new TextDecoder('utf-8');
     entries.forEach(function (e) {
@@ -199,6 +308,15 @@ if (!XLSX) {
     var wb = XLSX.read(bytes, { type: 'array' });
     var back = W.workbookToModel(wb, XLSX);
     assertSameTriples(model.triples, back.triples, 'round-trip через .xlsx потерял триплеты');
+  });
+
+  test('round-trip через настоящий .xlsx (TriG → xlsx → TriG)', function () {
+    var text = fs.readFileSync(path.join(__dirname, '..', 'examples', 'trig-vad.trig'), 'utf8');
+    var model = TG.parseTrig(text); model.rawText = text;
+    var bytes = TW.modelToXlsxBytes(model, XLSX);
+    var wb = XLSX.read(bytes, { type: 'array' });
+    var back = TW.workbookToModel(wb, XLSX);
+    assertSameQuads(model.quads, back.quads, 'round-trip TriG через .xlsx потерял квадры');
   });
 }
 
