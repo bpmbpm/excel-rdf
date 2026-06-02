@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>excel-rdf ver3 — конвертеры Turtle/TriG ⇄ Excel</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header>
+    <h1>excel-rdf <span class="ver">ver3</span></h1>
+    <p class="subtitle">Браузерные конвертеры <b>Turtle&nbsp;RDF&nbsp;⇄&nbsp;Excel</b> и <b>TriG&nbsp;⇄&nbsp;Excel</b>.
+       Всё выполняется локально в браузере, файлы никуда не отправляются.</p>
+    <p class="subtitle">Новое в ver3: для TriG листы анализа строятся вокруг <b>МегаТипов</b> (по <code>rdf:type</code>),
+       а принадлежность к именованному графу указывается в столбце <b>TriG</b>; добавлены листы
+       «TriG с Триплеты простые» и «TriG с Триплеты компактные» и общий лист «TriG».</p>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="t2e">Turtle → Excel</button>
+    <button class="tab" data-tab="e2t">Excel → Turtle</button>
+    <button class="tab" data-tab="g2e">TriG → Excel</button>
+    <button class="tab" data-tab="e2g">Excel → TriG</button>
+    <button class="tab" data-tab="about">О проекте</button>
+  </nav>
+
+  <!-- ===================== Turtle → Excel ===================== -->
+  <section id="t2e" class="panel active">
+    <h2>Turtle&nbsp;RDF → Excel</h2>
+    <p>Загрузите файл <code>.ttl</code> или вставьте текст Turtle, затем нажмите «Создать книгу Excel».
+       В готовой книге на каждом листе закреплена первая строка и включён автофильтр.</p>
+
+    <div class="row">
+      <label class="filebtn">
+        Выбрать .ttl файл
+        <input type="file" id="ttlFile" accept=".ttl,.txt,text/turtle" />
+      </label>
+      <button id="loadExample">Загрузить пример</button>
+    </div>
+
+    <textarea id="ttlInput" spellcheck="false" placeholder="@prefix : <http://example.org/bpm#> .
+:Процесс_А :МегаТип :Процесс ;
+    :владелец :Иванов ."></textarea>
+
+    <div class="row">
+      <button id="convertT2E" class="primary">Создать книгу Excel (.xlsx)</button>
+      <span id="t2eStatus" class="status"></span>
+    </div>
+
+    <div id="t2ePreview" class="preview"></div>
+  </section>
+
+  <!-- ===================== Excel → Turtle ===================== -->
+  <section id="e2t" class="panel">
+    <h2>Excel → Turtle&nbsp;RDF</h2>
+    <p>Загрузите книгу <code>.xlsx</code>, созданную этим инструментом (или с такой же структурой листов).
+       Источник данных для выгрузки — листы МегаТипов и лист «Прочие триплеты».</p>
+
+    <div class="row">
+      <label class="filebtn">
+        Выбрать .xlsx файл
+        <input type="file" id="xlsxFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+      </label>
+      <button id="convertE2T" class="primary">Преобразовать в Turtle</button>
+      <span id="e2tStatus" class="status"></span>
+    </div>
+
+    <textarea id="ttlOutput" spellcheck="false" placeholder="Здесь появится Turtle RDF..." readonly></textarea>
+
+    <div class="row">
+      <button id="downloadTtl">Скачать .ttl</button>
+      <button id="copyTtl">Копировать</button>
+    </div>
+  </section>
+
+  <!-- ===================== TriG → Excel ===================== -->
+  <section id="g2e" class="panel">
+    <h2>TriG → Excel</h2>
+    <p>TriG — расширение Turtle с именованными графами (<code>graph { ... }</code>).
+       В ver3 субъекты раскладываются по листам <b>МегаТипов</b> (по значению <code>rdf:type</code>),
+       а столбец <b>TriG</b> на листе показывает, к какому именованному графу относится утверждение.
+       Реестр листов МегаТипов — на листе «МегаТипы», сводка по графам — на общем листе «TriG».</p>
+
+    <div class="row">
+      <label class="filebtn">
+        Выбрать .trig файл
+        <input type="file" id="trigFile" accept=".trig,.ttl,.txt,application/trig" />
+      </label>
+      <button id="loadTrigExample">Загрузить пример (VAD)</button>
+      <button id="loadTrigSimpleExample">Загрузить простой пример</button>
+    </div>
+
+    <textarea id="trigInput" spellcheck="false" placeholder="@prefix : <http://example.org/vad#> .
+:graph1 {
+    :Процесс_А :исполнитель :Группа1 .
+}"></textarea>
+
+    <div class="row">
+      <button id="convertG2E" class="primary">Создать книгу Excel (.xlsx)</button>
+      <span id="g2eStatus" class="status"></span>
+    </div>
+
+    <div id="g2ePreview" class="preview"></div>
+  </section>
+
+  <!-- ===================== Excel → TriG ===================== -->
+  <section id="e2g" class="panel">
+    <h2>Excel → TriG</h2>
+    <p>Загрузите книгу <code>.xlsx</code> со структурой листов МегаТипов (создаётся вкладкой «TriG → Excel»).
+       Источник данных — листы МегаТипов, перечисленные на листе «МегаТипы» (граф берётся из столбца «TriG»).</p>
+
+    <div class="row">
+      <label class="filebtn">
+        Выбрать .xlsx файл
+        <input type="file" id="xlsxTrigFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+      </label>
+      <button id="convertE2G" class="primary">Преобразовать в TriG</button>
+      <span id="e2gStatus" class="status"></span>
+    </div>
+
+    <textarea id="trigOutput" spellcheck="false" placeholder="Здесь появится TriG..." readonly></textarea>
+
+    <div class="row">
+      <button id="downloadTrig">Скачать .trig</button>
+      <button id="copyTrig">Копировать</button>
+    </div>
+  </section>
+
+  <!-- ===================== О проекте ===================== -->
+  <section id="about" class="panel">
+    <h2>О проекте</h2>
+    <p>Редакция <b>ver3</b> развивает ver2: для TriG листы анализа утверждений строятся вокруг
+       <b>МегаТипов</b> (по <code>rdf:type</code>), а не вокруг графов. Принадлежность утверждения
+       к именованному графу указывается в отдельном столбце <b>TriG</b>. Добавлены отдельные
+       текстовые листы простой и компактной форм TriG и общий лист «TriG» со свойствами графов.
+       Подробности — в каталогах <code>doc/</code> и <code>analysis/</code>.</p>
+
+    <h3>Состав книги Excel (Turtle)</h3>
+    <ol>
+      <li><b>main</b> — перечень листов книги, их назначение и (для листов МегаТипов) их предикаты.</li>
+      <li><b>Префиксы</b> — префиксы, используемые в исходном Turtle.</li>
+      <li><b>Turtle исходный</b> — исходный текст Turtle RDF.</li>
+      <li><b>Триплеты простые</b> — по одному элементарному триплету на строку (без <code>;</code> и <code>,</code>).</li>
+      <li><b>Триплеты компактные</b> — Turtle с <code>;</code> и <code>,</code> (сокращённое число утверждений).</li>
+      <li><b>Листы МегаТипов</b> — на каждый МегаТип свой лист: строки — объекты, столбцы — предикаты.</li>
+      <li><b>Прочие триплеты</b> — триплеты субъектов без МегаТипа.</li>
+    </ol>
+
+    <h3>Состав книги Excel (TriG) — ver3</h3>
+    <ol>
+      <li><b>main</b> — перечень листов книги, их назначение и (для листов МегаТипов) их предикаты.</li>
+      <li><b>Префиксы</b> — префиксы, используемые в исходном TriG.</li>
+      <li><b>TriG исходный</b> — исходный текст TriG.</li>
+      <li><b>TriG с Триплеты простые</b> — TriG, где внутри графов по одному триплету на строку (без <code>;</code> и <code>,</code>).</li>
+      <li><b>TriG с Триплеты компактные</b> — TriG в компактной форме (с <code>;</code> и <code>,</code>).</li>
+      <li><b>Квадры простые</b> — по одной четвёрке (граф, субъект, предикат, объект) на строку.</li>
+      <li><b>TriG</b> — общий лист: свойства каждого графа TriG (субъекты и предикаты).</li>
+      <li><b>МегаТипы</b> — реестр листов МегаТипов (по <code>rdf:type</code> субъекта).</li>
+      <li><b>Листы МегаТипов</b> — на каждый МегаТип свой лист: столбцы <code>Субъект | TriG | предикаты…</code>;
+          строка — пара (субъект, граф).</li>
+    </ol>
+
+    <h3>Что нового в ver3</h3>
+    <ul>
+      <li>Листы TriG строятся вокруг <b>МегаТипов</b> (по <code>rdf:type</code>), а не вокруг графов.</li>
+      <li>Столбец <b>TriG</b> на листе МегаТипа указывает именованный граф каждого утверждения.</li>
+      <li>Отдельные текстовые листы: <b>TriG с Триплеты простые</b> и <b>TriG с Триплеты компактные</b>.</li>
+      <li>Общий лист <b>TriG</b> собирает свойства каждого именованного графа.</li>
+      <li>Два примера TriG: подробный <code>examples/trig-vad.trig</code> и простой <code>examples/trig-simple.trig</code>.</li>
+      <li>В примере <code>trig-vad.trig</code> МегаТипы: ObjectTree, TypeProcess, TypeExecutor, VADProcessDia, ExecutorGroup.</li>
+    </ul>
+  </section>
+
+  <footer>
+    <p>excel-rdf ver3 · только браузерный JavaScript · работает на GitHub&nbsp;Pages ·
+       таблицы через <a href="https://sheetjs.com/" target="_blank" rel="noopener">SheetJS</a></p>
+  </footer>
+
+  <!-- SheetJS (XLSX) из CDN — единственная внешняя зависимость, только браузер. -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="js/turtle.js"></script>
+  <script src="js/megatype.js"></script>
+  <script src="js/xlsx-extras.js"></script>
+  <script src="js/workbook.js"></script>
+  <script src="js/trig.js"></script>
+  <script src="js/graph.js"></script>
+  <script src="js/trig-megatype.js"></script>
+  <script src="js/trig-workbook.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
