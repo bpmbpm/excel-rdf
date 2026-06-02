@@ -1,0 +1,65 @@
+/* Минимальные стили интерфейса конвертеров. Только браузерный CSS, без сборки. */
+:root {
+  --accent: #2d6a4f;
+  --accent-dark: #1b4332;
+  --bg: #f6f8f7;
+  --border: #d4dad7;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  color: #1d1d1f;
+  background: var(--bg);
+  line-height: 1.5;
+}
+header, nav, section, footer { max-width: 980px; margin: 0 auto; padding: 0 20px; }
+header { padding-top: 28px; }
+h1 { margin: 0; color: var(--accent-dark); }
+.ver {
+  font-size: 0.5em;
+  vertical-align: middle;
+  background: var(--accent);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+.subtitle { color: #444; margin-top: 6px; }
+.tabs { display: flex; gap: 6px; border-bottom: 2px solid var(--border); margin-top: 18px; }
+.tab {
+  background: none; border: none; padding: 10px 16px; cursor: pointer;
+  font-size: 15px; color: #555; border-bottom: 3px solid transparent; margin-bottom: -2px;
+}
+.tab.active { color: var(--accent-dark); border-bottom-color: var(--accent); font-weight: 600; }
+.panel { display: none; padding-top: 20px; padding-bottom: 40px; }
+.panel.active { display: block; }
+textarea {
+  width: 100%; min-height: 220px; margin: 12px 0; padding: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px; border: 1px solid var(--border); border-radius: 8px; resize: vertical;
+  background: #fff;
+}
+.row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 10px 0; }
+button {
+  background: #fff; border: 1px solid var(--border); border-radius: 8px;
+  padding: 9px 16px; font-size: 14px; cursor: pointer; color: #222;
+}
+button:hover { border-color: var(--accent); }
+button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+button.primary:hover { background: var(--accent-dark); }
+.filebtn {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 8px; padding: 9px 16px; cursor: pointer; font-size: 14px;
+}
+.filebtn:hover { border-color: var(--accent); }
+.filebtn input { display: none; }
+code { background: #eef2f0; padding: 1px 5px; border-radius: 4px; font-size: 90%; }
+.status { font-size: 13px; }
+.status.ok { color: var(--accent-dark); }
+.status.err { color: #b00020; }
+.preview { margin-top: 16px; }
+.preview table { border-collapse: collapse; width: 100%; font-size: 13px; }
+.preview th, .preview td { border: 1px solid var(--border); padding: 5px 8px; text-align: left; }
+.preview th { background: #eaf0ed; }
+footer { color: #777; font-size: 13px; padding-top: 20px; padding-bottom: 30px; border-top: 1px solid var(--border); }
+footer a { color: var(--accent); }
